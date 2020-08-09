@@ -1,16 +1,32 @@
 import React from "react";
-import mockData from "./mockData";
-import { useState } from "react";
-import { Typography, Link } from "@material-ui/core";
-import { toFirstCharUpperCase } from "./constants";
 
+import { useState } from "react";
+import { Typography, Link, CircularProgress, Button } from "@material-ui/core";
+import { toFirstCharUpperCase } from "./constants";
+import axios from "axios";
+import { useEffect } from "react";
 const Pokemon = (props) => {
-  const { match } = props;
+  const { match, history } = props;
   const { params } = match;
   const { pokemonId } = params;
 
-  const [pokemon, setPokemon] = useState(mockData[pokemonId]);
-  console.log(pokemon);
+  const [pokemon, setPokemon] = useState(undefined);
+
+  useEffect(() => {
+    axios.get(
+      `https://pokeapi.co/api/v2/pokemon/${pokemonId}/`
+    ).then(response=>{
+        const { data } = response;
+        setPokemon(data);
+    }).catch(error=>{
+        setPokemon(false)
+    }) 
+  }, [])
+  //pokemon=undefined
+
+  //pokemon=good data
+
+  //pokemon = not found
   const generatePokemonJSX = () => {
     const { name, id, species, height, weight, types, sprites } = pokemon;
     const fullImageUrl = `https://pokeres.bastionbot.org/images/pokemon/${id}.png`;
@@ -27,17 +43,32 @@ const Pokemon = (props) => {
           {console.log(species.url)}
           <Link href={species.url}>{species.name}</Link>
         </Typography>
-    <Typography>Height: {height}</Typography>
-    <Typography>Weight: {weight}</Typography>
-    <Typography variant="h6">Types:</Typography>
-    {types.map(typeInfo=>{
-        return <Typography key={typeInfo.type.name}>{typeInfo.type.name}</Typography>
-    })}
+        <Typography>Height: {height}</Typography>
+        <Typography>Weight: {weight}</Typography>
+        <Typography variant="h6">Types:</Typography>
+        {types.map((typeInfo) => {
+          return (
+            <Typography key={typeInfo.type.name}>
+              {typeInfo.type.name}
+            </Typography>
+          );
+        })}
       </>
     );
   };
 
-  return <>{generatePokemonJSX()}</>;
+  return (
+    <>
+      {pokemon === undefined && <CircularProgress />}
+      {pokemon !== undefined && pokemon && generatePokemonJSX()}
+      {pokemon === false && <Typography> Pokemon not found</Typography>}
+      {pokemon !== undefined && (
+        <Button variant="contained" onClick={() => history.push("/")}>
+          Back to Pokedex
+        </Button>
+      )}
+    </>
+  );
 };
 
 export default Pokemon;
